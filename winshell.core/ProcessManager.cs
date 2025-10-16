@@ -401,6 +401,65 @@ namespace WinShell.Core
                 }
                 catch { }
             }
+            else if (_backgroundProcesses.TryGetValue(processId, out var bgProcess))
+            {
+                try
+                {
+                    bgProcess.Kill();
+                    _backgroundProcesses.TryRemove(processId, out _);
+                }
+                catch { }
+            }
+            else
+            {
+                // Try to kill any process by PID (not just our tracked ones)
+                try
+                {
+                    var proc = Process.GetProcessById(processId);
+                    proc.Kill();
+                }
+                catch { }
+            }
+        }
+
+        public CommandResult BringToForeground(int processId)
+        {
+            var result = new CommandResult();
+            
+            if (_backgroundProcesses.TryGetValue(processId, out var process))
+            {
+                try
+                {
+                    if (process.HasExited)
+                    {
+                        result.Output = $"[Job {processId} has already completed with exit code: {process.ExitCode}]";
+                        _backgroundProcesses.TryRemove(processId, out _);
+                        process.Dispose();
+                    }
+                    else
+                    {
+                        // Move from background to foreground tracking
+                        _backgroundProcesses.TryRemove(processId, out _);
+                        _runningProcesses[processId] = process;
+                        
+                        result.Output = $"[Brought job {processId} ({process.ProcessName}) to foreground]\n" +
+                                      $"Note: Process is still running but now tracked as foreground job.";
+                        result.Success = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result.Success = false;
+                    result.Error = $"Failed to bring job {processId} to foreground: {ex.Message}";
+                }
+            }
+            else
+            {
+                result.Success = false;
+                result.Error = $"No background job found with PID: {processId}";
+            }
+            
+            return result;
         }
 
         public IEnumerable<Process> GetRunningProcesses()

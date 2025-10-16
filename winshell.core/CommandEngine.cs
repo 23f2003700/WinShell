@@ -61,6 +61,10 @@ namespace WinShell.Core
             _builtInCommands["prompt"] = PromptCommand;
             _builtInCommands["type"] = TypeCommand;
             _builtInCommands["cat"] = TypeCommand;
+            _builtInCommands["jobs"] = JobsCommand;
+            _builtInCommands["fg"] = ForegroundCommand;
+            _builtInCommands["bg"] = BackgroundCommand;
+            _builtInCommands["kill"] = KillCommand;
         }
 
         public async Task<CommandResult> ExecuteCommandAsync(string input, CancellationToken cancellationToken = default)
@@ -410,26 +414,42 @@ namespace WinShell.Core
             var output = new System.Text.StringBuilder();
             
             output.AppendLine("\n=== WinShell Built-in Commands ===\n");
-            output.AppendLine("cd/chdir [path]     - Change directory");
-            output.AppendLine("dir/ls [path]       - List directory contents");
-            output.AppendLine("pwd                 - Print working directory");
-            output.AppendLine("echo [text]         - Display text");
-            output.AppendLine("set [var=value]     - Set/display environment variables");
-            output.AppendLine("env                 - Display environment info");
-            output.AppendLine("cls/clear           - Clear screen");
-            output.AppendLine("history             - Show command history");
-            output.AppendLine("pushd [path]        - Push directory to stack");
-            output.AppendLine("popd                - Pop directory from stack");
-            output.AppendLine("mkdir [path]        - Create directory");
-            output.AppendLine("rmdir [path]        - Remove directory");
-            output.AppendLine("del/rm [file]       - Delete file");
-            output.AppendLine("copy/cp [src] [dst] - Copy file");
-            output.AppendLine("move/mv [src] [dst] - Move file");
-            output.AppendLine("type/cat [file]     - Display file contents");
-            output.AppendLine("prompt [template]   - Set prompt template (WS$G, $P$G, etc.)");
-            output.AppendLine("help                - Show this help");
-            output.AppendLine("exit                - Exit WinShell");
-            output.AppendLine("\n* All PowerShell commands are also supported *");
+            output.AppendLine("File & Directory:");
+            output.AppendLine("  cd/chdir [path]     - Change directory");
+            output.AppendLine("  dir/ls [path]       - List directory contents");
+            output.AppendLine("  pwd                 - Print working directory");
+            output.AppendLine("  mkdir [path]        - Create directory");
+            output.AppendLine("  rmdir [path]        - Remove directory");
+            output.AppendLine("  del/rm [file]       - Delete file");
+            output.AppendLine("  copy/cp [src] [dst] - Copy file");
+            output.AppendLine("  move/mv [src] [dst] - Move file");
+            output.AppendLine("  type/cat [file]     - Display file contents");
+            output.AppendLine("\nEnvironment & Display:");
+            output.AppendLine("  echo [text]         - Display text");
+            output.AppendLine("  set [var=value]     - Set/display environment variables");
+            output.AppendLine("  env                 - Display environment info");
+            output.AppendLine("  cls/clear           - Clear screen");
+            output.AppendLine("  prompt [template]   - Set prompt template (WS$G, $P$G, etc.)");
+            output.AppendLine("\nNavigation & History:");
+            output.AppendLine("  pushd [path]        - Push directory to stack");
+            output.AppendLine("  popd                - Pop directory from stack");
+            output.AppendLine("  history             - Show command history");
+            output.AppendLine("\nProcess Management:");
+            output.AppendLine("  jobs                - List background jobs");
+            output.AppendLine("  fg [pid]            - Bring background job to foreground");
+            output.AppendLine("  bg [pid]            - Send job to background (resume)");
+            output.AppendLine("  kill [pid]          - Terminate process by PID");
+            output.AppendLine("\nAdvanced Features:");
+            output.AppendLine("  command | command   - Pipe output between commands");
+            output.AppendLine("  command > file      - Redirect output to file (overwrite)");
+            output.AppendLine("  command >> file     - Redirect output to file (append)");
+            output.AppendLine("  command &           - Run command in background");
+            output.AppendLine("\nSystem:");
+            output.AppendLine("  help                - Show this help");
+            output.AppendLine("  exit                - Exit WinShell");
+            output.AppendLine("\n=== External Commands ===");
+            output.AppendLine("Any executable in PATH can be run directly (e.g., notepad, git, python)");
+            output.AppendLine("No PowerShell wrapper - 100% native process execution!");
             
             result.Output = output.ToString();
             return await Task.FromResult(result);
@@ -680,6 +700,179 @@ namespace WinShell.Core
                 var newPrompt = string.Join(" ", args);
                 _environment.SetVariable("PROMPT", newPrompt);
                 result.Output = $"Prompt updated to: {newPrompt}";
+            }
+            
+            return await Task.FromResult(result);
+        }
+
+        private async Task<CommandResult> JobsCommand(string[] args)
+        {
+            var result = new CommandResult();
+            var output = new System.Text.StringBuilder();
+            
+            var backgroundJobs = _processManager.GetBackgroundProcesses().ToList();
+            
+            if (backgroundJobs.Count == 0)
+            {
+                result.Output = "No background jobs running.";
+            }
+            else
+            {
+                output.AppendLine("\n=== Background Jobs ===\n");
+                output.AppendLine($"{"PID",-10} {"Process Name",-30} {"Status"}");
+                output.AppendLine(new string('-', 60));
+                
+                foreach (var process in backgroundJobs)
+                {
+                    try
+                    {
+                        var status = process.HasExited ? "Completed" : "Running";
+                        output.AppendLine($"{process.Id,-10} {process.ProcessName,-30} {status}");
+                    }
+                    catch
+                    {
+                        output.AppendLine($"{process.Id,-10} {"<unknown>",-30} {"Error"}");
+                    }
+                }
+                
+                result.Output = output.ToString();
+            }
+            
+            return await Task.FromResult(result);
+        }
+
+        private async Task<CommandResult> ForegroundCommand(string[] args)
+        {
+            var result = new CommandResult();
+            
+            if (args.Length == 0)
+            {
+                result.Success = false;
+                result.Error = "Usage: fg <PID>\nBring a background job to foreground.";
+                result.ExitCode = 1;
+            }
+            else
+            {
+                if (int.TryParse(args[0], out int pid))
+                {
+                    var fgResult = _processManager.BringToForeground(pid);
+                    if (fgResult.Success)
+                    {
+                        result.Output = fgResult.Output;
+                        // Wait for the process to complete
+                        await Task.Delay(100); // Small delay to allow process attachment
+                    }
+                    else
+                    {
+                        result.Success = false;
+                        result.Error = fgResult.Error;
+                        result.ExitCode = 1;
+                    }
+                }
+                else
+                {
+                    result.Success = false;
+                    result.Error = $"Invalid PID: {args[0]}";
+                    result.ExitCode = 1;
+                }
+            }
+            
+            return await Task.FromResult(result);
+        }
+
+        private async Task<CommandResult> BackgroundCommand(string[] args)
+        {
+            var result = new CommandResult();
+            
+            if (args.Length == 0)
+            {
+                result.Success = false;
+                result.Error = "Usage: bg <PID>\nResume a stopped job in the background.";
+                result.ExitCode = 1;
+            }
+            else
+            {
+                if (int.TryParse(args[0], out int pid))
+                {
+                    // In a simple shell, bg typically resumes a stopped job
+                    // Since we don't have job control (Ctrl+Z), this is informational
+                    var backgroundJobs = _processManager.GetBackgroundProcesses().ToList();
+                    var job = backgroundJobs.FirstOrDefault(p => p.Id == pid);
+                    
+                    if (job != null)
+                    {
+                        result.Output = $"Job {pid} is already running in background.";
+                    }
+                    else
+                    {
+                        result.Success = false;
+                        result.Error = $"No background job found with PID: {pid}";
+                        result.ExitCode = 1;
+                    }
+                }
+                else
+                {
+                    result.Success = false;
+                    result.Error = $"Invalid PID: {args[0]}";
+                    result.ExitCode = 1;
+                }
+            }
+            
+            return await Task.FromResult(result);
+        }
+
+        private async Task<CommandResult> KillCommand(string[] args)
+        {
+            var result = new CommandResult();
+            
+            if (args.Length == 0)
+            {
+                result.Success = false;
+                result.Error = "Usage: kill <PID> [PID2] [PID3] ...\nTerminate one or more processes.";
+                result.ExitCode = 1;
+            }
+            else
+            {
+                var killed = new List<int>();
+                var failed = new List<string>();
+                
+                foreach (var arg in args)
+                {
+                    if (int.TryParse(arg, out int pid))
+                    {
+                        try
+                        {
+                            _processManager.KillProcess(pid);
+                            killed.Add(pid);
+                        }
+                        catch (Exception ex)
+                        {
+                            failed.Add($"PID {pid}: {ex.Message}");
+                        }
+                    }
+                    else
+                    {
+                        failed.Add($"Invalid PID: {arg}");
+                    }
+                }
+                
+                var output = new System.Text.StringBuilder();
+                if (killed.Count > 0)
+                {
+                    output.AppendLine($"Successfully killed {killed.Count} process(es): {string.Join(", ", killed)}");
+                }
+                if (failed.Count > 0)
+                {
+                    output.AppendLine($"Failed to kill {failed.Count} process(es):");
+                    foreach (var error in failed)
+                    {
+                        output.AppendLine($"  - {error}");
+                    }
+                    result.Success = failed.Count == 0;
+                    result.ExitCode = failed.Count > 0 ? 1 : 0;
+                }
+                
+                result.Output = output.ToString();
             }
             
             return await Task.FromResult(result);
