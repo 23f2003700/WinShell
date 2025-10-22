@@ -120,14 +120,16 @@ namespace WinShell.Core
         {
             // Split by pipe operator
             var commands = input.Split(new[] { " | " }, StringSplitOptions.None);
-            var pipeline = new List<(string command, string[] args)>();
+            var pipeline = new List<(string command, string[] args, bool isBuiltIn)>();
 
             foreach (var cmd in commands)
             {
                 var parsed = _parser.Parse(cmd.Trim());
                 if (parsed != null)
                 {
-                    pipeline.Add((parsed.Command, parsed.Arguments));
+                    // Check if it's a built-in command
+                    bool isBuiltIn = _builtInCommands.ContainsKey(parsed.Command);
+                    pipeline.Add((parsed.Command, parsed.Arguments, isBuiltIn));
                 }
             }
 
@@ -140,8 +142,39 @@ namespace WinShell.Core
                 };
             }
 
-            // Execute pipeline natively - ProcessManager will handle piping
-            return await _processManager.ExecutePipelineAsync(pipeline, cancellationToken);
+            // Check if first command is built-in
+            if (pipeline[0].isBuiltIn)
+            {
+                // Execute built-in command first, then pipe to external commands
+                return await ExecuteBuiltInPipelineAsync(pipeline, cancellationToken);
+            }
+            else
+            {
+                // All external commands - use ProcessManager
+                var externalPipeline = pipeline.Select(p => (p.command, p.args)).ToList();
+                return await _processManager.ExecutePipelineAsync(externalPipeline, cancellationToken);
+            }
+        }
+
+        private async Task<CommandResult> ExecuteBuiltInPipelineAsync(List<(string command, string[] args, bool isBuiltIn)> pipeline, CancellationToken cancellationToken)
+        {
+            // Execute the first command (built-in) to get its output
+            var firstCmd = pipeline[0];
+            var builtInResult = await _builtInCommands[firstCmd.command](firstCmd.args);
+
+            if (!builtInResult.Success || pipeline.Count == 1)
+            {
+                return builtInResult;
+            }
+
+            // Now pipe the output to the remaining commands
+            var remainingPipeline = pipeline.Skip(1).Select(p => (p.command, p.args)).ToList();
+            
+            // Feed the built-in output as input to the external command pipeline
+            return await _processManager.ExecutePipelineWithInputAsync(
+                remainingPipeline, 
+                builtInResult.Output, 
+                cancellationToken);
         }
 
         private async Task<CommandResult> HandleBackgroundAsync(string input, CancellationToken cancellationToken)
@@ -447,9 +480,6 @@ namespace WinShell.Core
             output.AppendLine("\nSystem:");
             output.AppendLine("  help                - Show this help");
             output.AppendLine("  exit                - Exit WinShell");
-            output.AppendLine("\n=== External Commands ===");
-            output.AppendLine("Any executable in PATH can be run directly (e.g., notepad, git, python)");
-            output.AppendLine("No PowerShell wrapper - 100% native process execution!");
             
             result.Output = output.ToString();
             return await Task.FromResult(result);
@@ -876,6 +906,15 @@ namespace WinShell.Core
             }
             
             return await Task.FromResult(result);
+        }
+
+        #endregion
+
+        #region Public Methods
+
+        public IEnumerable<System.Diagnostics.Process> GetBackgroundJobs()
+        {
+            return _processManager.GetBackgroundProcesses();
         }
 
         #endregion

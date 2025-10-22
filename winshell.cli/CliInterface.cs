@@ -53,6 +53,7 @@ namespace WinShell.CLI
                     if (result.Output == "[CLEAR_SCREEN]")
                     {
                         Console.Clear();
+                        PrintBanner(); // Reprint banner after clearing
                     }
                     else if (!string.IsNullOrEmpty(result.Output))
                     {

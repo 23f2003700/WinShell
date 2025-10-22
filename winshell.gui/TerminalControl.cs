@@ -257,7 +257,9 @@ namespace WinShell.GUI
                 return;
             }
 
+            // Don't clear everything - just preserve the welcome banner
             _outputBox.Clear();
+            PrintWelcome();
         }
 
         public void Clear()
@@ -369,10 +371,33 @@ namespace WinShell.GUI
 
         public void KillAllProcesses()
         {
-            // This would typically interact with ProcessManager
-            // For now, just notify
-            AppendOutput("All background processes killed.\n", Color.Yellow);
-            StatusChanged?.Invoke(this, "All jobs killed");
+            try
+            {
+                // Get the CommandEngine and ProcessManager to kill all background jobs
+                var backgroundJobs = _engine.GetBackgroundJobs();
+                int killedCount = 0;
+                
+                foreach (var job in backgroundJobs)
+                {
+                    try
+                    {
+                        if (!job.HasExited)
+                        {
+                            job.Kill();
+                            killedCount++;
+                        }
+                    }
+                    catch { /* Process may have already exited */ }
+                }
+                
+                AppendOutput($"Killed {killedCount} background process(es).\n", Color.Yellow);
+                StatusChanged?.Invoke(this, $"Killed {killedCount} jobs");
+            }
+            catch (Exception ex)
+            {
+                AppendOutput($"Error killing processes: {ex.Message}\n", Color.Red);
+                StatusChanged?.Invoke(this, "Error");
+            }
         }
 
         public void FindText(string searchText)

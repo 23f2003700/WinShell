@@ -131,6 +131,162 @@ namespace WinShell.Core
         }
 
         /// <summary>
+        /// Execute a pipeline with initial input from a built-in command
+        /// Example: dir | findstr "Pacman" (where dir is built-in, findstr is external)
+        /// </summary>
+        public async Task<CommandResult> ExecutePipelineWithInputAsync(List<(string command, string[] args)> pipeline, string input, CancellationToken cancellationToken = default)
+        {
+            var result = new CommandResult();
+            var stopwatch = Stopwatch.StartNew();
+
+            try
+            {
+                if (pipeline.Count == 0)
+                {
+                    result.Success = false;
+                    result.Error = "Empty pipeline";
+                    return result;
+                }
+
+                var processes = new List<Process>();
+                Process previousProcess = null;
+
+                // Start all processes in the pipeline
+                for (int i = 0; i < pipeline.Count; i++)
+                {
+                    var (command, args) = pipeline[i];
+                    var executablePath = ResolveExecutable(command);
+                    
+                    if (executablePath == null)
+                    {
+                        // Clean up already started processes
+                        foreach (var p in processes)
+                        {
+                            try { p.Kill(); p.Dispose(); } catch { }
+                        }
+                        
+                        result.Success = false;
+                        result.Error = "'" + command + "' is not recognized as an internal or external command.";
+                        result.ExitCode = 1;
+                        stopwatch.Stop();
+                        result.ExecutionTime = stopwatch.Elapsed;
+                        return result;
+                    }
+
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = executablePath,
+                        Arguments = string.Join(" ", args),
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        RedirectStandardInput = true,
+                        CreateNoWindow = true,
+                        WorkingDirectory = _environment.CurrentDirectory
+                    };
+
+                    foreach (var kvp in _environment.Variables)
+                    {
+                        startInfo.EnvironmentVariables[kvp.Key] = kvp.Value;
+                    }
+
+                    var process = new Process { StartInfo = startInfo };
+                    processes.Add(process);
+                    process.Start();
+                    _runningProcesses[process.Id] = process;
+
+                    if (i == 0)
+                    {
+                        // First process: feed the input string to stdin
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await process.StandardInput.WriteAsync(input);
+                                process.StandardInput.Close();
+                            }
+                            catch { /* Pipe broken is normal */ }
+                        });
+                    }
+                    else if (previousProcess != null)
+                    {
+                        // Connect pipe from previous process to this process's stdin
+                        var prevProc = previousProcess;
+                        var currProc = process;
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await prevProc.StandardOutput.BaseStream.CopyToAsync(currProc.StandardInput.BaseStream);
+                                currProc.StandardInput.Close();
+                            }
+                            catch { /* Pipe broken is normal when process terminates */ }
+                        });
+                    }
+
+                    previousProcess = process;
+                }
+
+                // Capture output from the LAST process in the pipeline
+                var lastProcess = processes[processes.Count - 1];
+                var outputBuilder = new StringBuilder();
+                var errorBuilder = new StringBuilder();
+
+                var outputTask = Task.Run(async () =>
+                {
+                    string line;
+                    while ((line = await lastProcess.StandardOutput.ReadLineAsync()) != null)
+                    {
+                        outputBuilder.AppendLine(line);
+                        OutputReceived?.Invoke(this, line);
+                    }
+                });
+
+                var errorTask = Task.Run(async () =>
+                {
+                    string line;
+                    while ((line = await lastProcess.StandardError.ReadLineAsync()) != null)
+                    {
+                        errorBuilder.AppendLine(line);
+                        ErrorReceived?.Invoke(this, line);
+                    }
+                });
+
+                // Wait for all processes to complete
+                await Task.WhenAll(processes.Select(p => WaitForExitAsync(p, cancellationToken)));
+                await Task.WhenAll(outputTask, errorTask);
+
+                // Get exit code BEFORE disposing
+                var finalExitCode = lastProcess.ExitCode;
+
+                // Clean up
+                foreach (var process in processes)
+                {
+                    _runningProcesses.TryRemove(process.Id, out _);
+                    process.Dispose();
+                }
+
+                result.Output = outputBuilder.ToString();
+                result.Error = errorBuilder.ToString();
+                result.ExitCode = finalExitCode;
+                result.Success = finalExitCode == 0;
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Error = ex.Message;
+                result.ExitCode = -1;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                result.ExecutionTime = stopwatch.Elapsed;
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Execute a pipeline of commands - 100% NATIVE piping (NO PowerShell)
         /// Example: dir | findstr ".txt" | sort
         /// </summary>
@@ -236,6 +392,9 @@ namespace WinShell.Core
                 await Task.WhenAll(processes.Select(p => WaitForExitAsync(p, cancellationToken)));
                 await Task.WhenAll(outputTask, errorTask);
 
+                // Get exit code BEFORE disposing
+                var finalExitCode = lastProcess.ExitCode;
+
                 // Clean up
                 foreach (var process in processes)
                 {
@@ -245,8 +404,8 @@ namespace WinShell.Core
 
                 result.Output = outputBuilder.ToString();
                 result.Error = errorBuilder.ToString();
-                result.ExitCode = lastProcess.ExitCode;
-                result.Success = lastProcess.ExitCode == 0;
+                result.ExitCode = finalExitCode;
+                result.Success = finalExitCode == 0;
             }
             catch (Exception ex)
             {

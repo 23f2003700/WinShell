@@ -418,8 +418,8 @@ Licensed under MIT License";
 
         private void ShowProcessMonitor()
         {
-            var monitorForm = new ProcessMonitorForm(_terminal.GetProcessManager());
-            monitorForm.ShowDialog();
+            var processInfoForm = new ProcessInfoForm();
+            processInfoForm.ShowDialog();
         }
 
         private void ShowQuickNavigate()
