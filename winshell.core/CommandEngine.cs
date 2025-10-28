@@ -65,6 +65,16 @@ namespace WinShell.Core
             _builtInCommands["fg"] = ForegroundCommand;
             _builtInCommands["bg"] = BackgroundCommand;
             _builtInCommands["kill"] = KillCommand;
+            
+            // Custom ASCII Art Commands
+            _builtInCommands["ag"] = args => ShowAsciiArtCommand("AG.txt", "Ag.jpg", args);
+            _builtInCommands["aloksir"] = args => ShowAsciiArtCommand("AlokSir.txt", "alok sir.png", args);
+            _builtInCommands["monikamam"] = args => ShowAsciiArtCommand("monika mam.txt", "monika mam.jpg", args);
+            _builtInCommands["simranmam"] = args => ShowAsciiArtCommand("simran mam.txt", "simran mam.jpg", args);
+            _builtInCommands["ss"] = args => ShowAsciiArtCommand("SS.txt", "SS.png", args);
+            _builtInCommands["abhishekgour"] = args => ShowAsciiArtCommand("abhishek gour.txt", "abhishek gour.jpg", args);
+            _builtInCommands["ncb"] = args => ShowAsciiArtCommand("NCB.md", "NCB.jpg", args);
+            _builtInCommands["logo"] = args => ShowLogoCommand(args);
         }
 
         public async Task<CommandResult> ExecuteCommandAsync(string input, CancellationToken cancellationToken = default)
@@ -477,6 +487,15 @@ namespace WinShell.Core
             output.AppendLine("  command > file      - Redirect output to file (overwrite)");
             output.AppendLine("  command >> file     - Redirect output to file (append)");
             output.AppendLine("  command &           - Run command in background");
+            output.AppendLine("\nCustom ASCII Art:");
+            output.AppendLine("  ag                  - Display AG ASCII art");
+            output.AppendLine("  aloksir             - Display Alok Sir ASCII art");
+            output.AppendLine("  monikamam           - Display Monika Mam ASCII art");
+            output.AppendLine("  simranmam           - Display Simran Mam ASCII art");
+            output.AppendLine("  ss                  - Display SS ASCII art");
+            output.AppendLine("  abhishekgour        - Display Abhishek Gour ASCII art");
+            output.AppendLine("  ncb                 - Display NCB ASCII art");
+            output.AppendLine("  logo                - Display WinShell logo (ok.png)");
             output.AppendLine("\nSystem:");
             output.AppendLine("  help                - Show this help");
             output.AppendLine("  exit                - Exit WinShell");
@@ -903,6 +922,111 @@ namespace WinShell.Core
                 }
                 
                 result.Output = output.ToString();
+            }
+            
+            return await Task.FromResult(result);
+        }
+
+        private async Task<CommandResult> ShowAsciiArtCommand(string asciiFile, string imageFile, string[] args)
+        {
+            var result = new CommandResult { Success = true };
+            
+            try
+            {
+                // Get the base directory (where the executable is)
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string asciiPath = Path.Combine(baseDir, "ascii", asciiFile);
+                string imagePath = Path.Combine(baseDir, "ascii", "gui_pics", imageFile);
+                
+                // For CLI: Return ASCII art text
+                // For GUI: Return special marker with image path
+                
+                if (File.Exists(asciiPath))
+                {
+                    string asciiContent = await File.ReadAllTextAsync(asciiPath);
+                    
+                    // Check if we should display image (GUI will handle this)
+                    if (File.Exists(imagePath))
+                    {
+                        // Return both: ASCII for CLI, image path marker for GUI
+                        result.Output = $"[ASCII_ART_IMAGE:{imagePath}]\n{asciiContent}";
+                    }
+                    else
+                    {
+                        // Just ASCII art
+                        result.Output = asciiContent;
+                    }
+                }
+                else
+                {
+                    result.Success = false;
+                    result.Error = $"ASCII art file not found: {asciiFile}";
+                    result.ExitCode = 1;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Error = $"Error loading ASCII art: {ex.Message}";
+                result.ExitCode = 1;
+            }
+            
+            return result;
+        }
+
+        private async Task<CommandResult> ShowLogoCommand(string[] args)
+        {
+            var result = new CommandResult { Success = true };
+            
+            try
+            {
+                // Get the base directory (where the executable is)
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                // Go up to find ok.png in the project root
+                string logoPath = Path.Combine(baseDir, "..", "..", "..", "..", "ok.png");
+                
+                // Try to resolve the absolute path
+                if (!File.Exists(logoPath))
+                {
+                    // Try alternate locations
+                    logoPath = Path.Combine(baseDir, "ok.png");
+                    if (!File.Exists(logoPath))
+                    {
+                        logoPath = Path.Combine(baseDir, "..", "ok.png");
+                        if (!File.Exists(logoPath))
+                        {
+                            logoPath = Path.Combine(baseDir, "..", "..", "ok.png");
+                        }
+                    }
+                }
+                
+                if (File.Exists(logoPath))
+                {
+                    // For GUI: Return special marker with image path
+                    // For CLI: Return text description
+                    string logoInfo = @"
+╔══════════════════════════════════════════════════════════╗
+║                     WinShell Logo                        ║
+║                                                          ║
+║          Aashita · Aaryan · Harsh · WINSHELL            ║
+║                                                          ║
+║              Professional Terminal Solution              ║
+╚══════════════════════════════════════════════════════════╝
+";
+                    result.Output = $"[ASCII_ART_IMAGE:{Path.GetFullPath(logoPath)}]\n{logoInfo}";
+                }
+                else
+                {
+                    result.Success = false;
+                    result.Error = "Logo file (ok.png) not found";
+                    result.ExitCode = 1;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Error = $"Error loading logo: {ex.Message}";
+                result.ExitCode = 1;
             }
             
             return await Task.FromResult(result);

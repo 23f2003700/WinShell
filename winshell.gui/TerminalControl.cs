@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -54,6 +55,7 @@ namespace WinShell.GUI
             };
 
             _inputBox.KeyDown += InputBox_KeyDown;
+            _outputBox.KeyDown += OutputBox_KeyDown;
             _outputBox.TextChanged += (s, e) => ScrollToBottom();
 
             Controls.Add(_outputBox);
@@ -77,6 +79,7 @@ namespace WinShell.GUI
 
         private void PrintWelcome()
         {
+            AppendOutput("                          WinShell GUI\n\n", Color.Cyan);
             AppendOutput(@"
 ╦ ╦╦╔╗╔╔═╗╦ ╦╔═╗╦  ╦  
 ║║║║║║║╚═╗╠═╣║╣ ║  ║  
@@ -114,6 +117,41 @@ namespace WinShell.GUI
                 e.SuppressKeyPress = true;
                 Clear();
             }
+            else if (e.Control && (e.KeyCode == Keys.Oemplus || e.KeyCode == Keys.Add))
+            {
+                e.SuppressKeyPress = true;
+                ZoomIn();
+            }
+            else if (e.Control && (e.KeyCode == Keys.OemMinus || e.KeyCode == Keys.Subtract))
+            {
+                e.SuppressKeyPress = true;
+                ZoomOut();
+            }
+            else if (e.Control && e.KeyCode == Keys.D0)
+            {
+                e.SuppressKeyPress = true;
+                ResetZoom();
+            }
+        }
+
+        private void OutputBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Handle zoom in output box as well
+            if (e.Control && (e.KeyCode == Keys.Oemplus || e.KeyCode == Keys.Add))
+            {
+                e.SuppressKeyPress = true;
+                ZoomIn();
+            }
+            else if (e.Control && (e.KeyCode == Keys.OemMinus || e.KeyCode == Keys.Subtract))
+            {
+                e.SuppressKeyPress = true;
+                ZoomOut();
+            }
+            else if (e.Control && e.KeyCode == Keys.D0)
+            {
+                e.SuppressKeyPress = true;
+                ResetZoom();
+            }
         }
 
         private async Task ProcessCommand()
@@ -148,6 +186,30 @@ namespace WinShell.GUI
                 if (result.Output == "[CLEAR_SCREEN]")
                 {
                     ClearScreen();
+                }
+                // Check for ASCII art with image
+                else if (!string.IsNullOrEmpty(result.Output) && result.Output.StartsWith("[ASCII_ART_IMAGE:"))
+                {
+                    // Extract image path
+                    int endIndex = result.Output.IndexOf("]");
+                    if (endIndex > 0)
+                    {
+                        string imagePath = result.Output.Substring(17, endIndex - 17);
+                        string asciiText = result.Output.Substring(endIndex + 2); // Skip ]\n
+                        
+                        // Try to display image, always show ASCII as well
+                        if (File.Exists(imagePath))
+                        {
+                            ShowImageInOutput(imagePath);
+                            AppendOutput("\n" + asciiText, Color.Cyan);
+                        }
+                        else
+                        {
+                            AppendOutput(asciiText, Color.Cyan);
+                        }
+                    }
+                    if (!result.Output.EndsWith("\n"))
+                        AppendOutput("\n", Color.White);
                 }
                 else if (!string.IsNullOrEmpty(result.Output))
                 {
@@ -243,6 +305,49 @@ namespace WinShell.GUI
             _outputBox.SelectionColor = _outputBox.ForeColor;
         }
 
+        private void ShowImageInOutput(string imagePath)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => ShowImageInOutput(imagePath)));
+                return;
+            }
+
+            try
+            {
+                // Load and display image in the RichTextBox
+                using (var img = Image.FromFile(imagePath))
+                {
+                    // Create a scaled version if image is too large
+                    int maxWidth = _outputBox.ClientSize.Width - 50;
+                    int maxHeight = 400;
+                    
+                    int width = img.Width;
+                    int height = img.Height;
+                    
+                    if (width > maxWidth || height > maxHeight)
+                    {
+                        double scale = Math.Min((double)maxWidth / width, (double)maxHeight / height);
+                        width = (int)(width * scale);
+                        height = (int)(height * scale);
+                    }
+                    
+                    var scaledImage = new Bitmap(img, width, height);
+                    Clipboard.SetImage(scaledImage);
+                    
+                    _outputBox.SelectionStart = _outputBox.TextLength;
+                    _outputBox.Paste();
+                    _outputBox.AppendText("\n");
+                    
+                    scaledImage.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendOutput($"Error displaying image: {ex.Message}\n", Color.Red);
+            }
+        }
+
         private void ScrollToBottom()
         {
             _outputBox.SelectionStart = _outputBox.Text.Length;
@@ -288,7 +393,7 @@ namespace WinShell.GUI
 
         public void ZoomOut()
         {
-            if (_currentZoom > 0.5f)
+            if (_currentZoom > 0.3f)  // Allow zooming out more for ASCII art
             {
                 _currentZoom -= 0.1f;
                 UpdateZoom();
@@ -310,10 +415,10 @@ namespace WinShell.GUI
             _inputBox.Font = font;
         }
 
-        public void ExecuteCommand(string command)
+        public async void ExecuteCommand(string command)
         {
             _inputBox.Text = command;
-            ProcessCommand().Wait();
+            await ProcessCommand();
         }
 
         public void ExecuteScript(string scriptPath)
@@ -374,7 +479,7 @@ namespace WinShell.GUI
             try
             {
                 // Get the CommandEngine and ProcessManager to kill all background jobs
-                var backgroundJobs = _engine.GetBackgroundJobs();
+                var backgroundJobs = _engine.GetBackgroundJobs().ToList();
                 int killedCount = 0;
                 
                 foreach (var job in backgroundJobs)
@@ -384,6 +489,7 @@ namespace WinShell.GUI
                         if (!job.HasExited)
                         {
                             job.Kill();
+                            job.WaitForExit(1000); // Wait up to 1 second
                             killedCount++;
                         }
                     }

@@ -1,220 +1,177 @@
-# WinShell - Advanced Windows Shell
+# WinShell - Modern Terminal Solution for Windows
 
-WinShell is an advanced Windows shell application available in both GUI and CLI modes.
+A comprehensive Windows terminal application developed as part of an academic project, combining the functionality of a graphical user interface and command-line interface into a unified shell environment.
 
-## Features
+## Project Overview
 
-- **Standalone CLI Mode**: Runs in its own separate console window
-- **GUI Mode**: Windows Forms-based graphical interface  
-- **Built-in Commands**: Comprehensive set of shell commands
-- **Command History**: Track and recall previous commands
-- **Environment Variables**: Full environment variable support
-- **Directory Navigation**: Advanced directory management with stack support
+WinShell represents a complete reimagining of the traditional Windows command-line experience. The project demonstrates advanced software engineering principles by implementing a dual-interface terminal that provides both GUI convenience and CLI efficiency while maintaining a shared core engine architecture.
 
-## Running WinShell
+## Core Architecture
 
-### Method 1: Using Launch Scripts (Recommended)
+The project is structured using a layered architecture pattern that promotes separation of concerns and maintainability:
 
-#### CLI - Smart Launch with Process Management
-```powershell
-# PowerShell - Handles existing processes automatically
-.\launch-cli.ps1
+### winshell.common
+Contains shared interfaces and data structures used throughout the application. This layer defines the contract for command execution results and command implementations, ensuring consistency across all components.
 
-# Force close existing instances
-.\launch-cli.ps1 -Force
+### winshell.core
+The heart of the application, containing:
+- **CommandEngine**: Orchestrates command parsing, execution, and result handling
+- **ProcessManager**: Manages external process lifecycle and background job execution
+- **ShellEnvironment**: Maintains session state including current directory and environment variables
+- **CommandParser**: Tokenizes and validates command syntax with support for pipes and redirections
 
-# Batch file version
-launch-cli.bat
+### winshell.cli
+Command-line interface implementation providing:
+- Interactive command prompt with history navigation
+- Asynchronous command execution
+- Signal handling for process interruption
+- Support for Windows Console zoom and formatting
+- ASCII art display capabilities
 
-# Direct executable launch
-.\launch-cli-direct.ps1
-```
+### winshell.gui
+Windows Forms-based graphical interface featuring:
+- Custom terminal control with rich text formatting
+- Theme management system with multiple color schemes
+- Visual process monitoring with real-time metrics
+- Quick navigation dialog for common system locations
+- Image embedding support for enhanced content display
+- Zoom functionality for improved accessibility
 
-#### GUI (Windows Forms)
+## Key Features
+
+### Dual Interface Design
+Users can choose between GUI and CLI modes depending on their workflow preferences. Both interfaces share the same underlying command engine, ensuring consistent behavior and results.
+
+### Advanced Command Processing
+The shell supports sophisticated command patterns including:
+- Pipeline operations for chaining commands
+- Input and output redirection
+- Background job execution
+- Built-in command set with native implementation
+- External program execution with full console support
+
+### Visual Enhancements
+The GUI provides modern features not typically found in traditional terminals:
+- Live theme switching without restart
+- Real-time process monitoring with sortable columns
+- Embedded image support for rich content
+- Customizable font sizing with zoom controls
+
+### Custom Commands
+Includes specialized commands for displaying ASCII art and images, demonstrating the extensibility of the command system. The logo command showcases project branding while the ASCII art commands illustrate how text and graphics can be integrated into terminal workflows.
+
+## Technical Implementation
+
+### Language and Framework
+- Built with C# targeting .NET 6.0
+- Windows Forms for GUI implementation
+- Asynchronous programming model using async/await
+- Strong typing with interface-based design
+
+### Command Execution Model
+Commands are executed through a unified pipeline:
+1. Input parsing and tokenization
+2. Command type resolution (built-in vs external)
+3. Asynchronous execution with cancellation support
+4. Result aggregation and output formatting
+5. Error handling and status reporting
+
+### Process Management
+Background processes are tracked and managed through a dedicated ProcessManager component, allowing users to:
+- List active background jobs
+- Bring jobs to foreground
+- Terminate running processes
+- Monitor resource usage
+
+## Installation and Usage
+
+### Requirements
+- Windows 10 or later (version 1809+)
+- .NET 6.0 Runtime (included in self-contained builds)
+
+### Building from Source
 ```bash
-dotnet run --project winshell.gui\WinShell.GUI.csproj
+dotnet build WinShell.sln -c Release
 ```
 
-### Method 2: Using dotnet run (Basic)
-
-#### CLI (Standalone Console Window)
+### Running the Applications
+GUI Mode:
 ```bash
-dotnet run --project winshell.cli\WinShell.CLI.csproj
+dotnet run --project winshell.gui/WinShell.GUI.csproj
 ```
 
-#### GUI (Windows Forms)
+CLI Mode:
 ```bash
-dotnet run --project winshell.gui\WinShell.GUI.csproj
+dotnet run --project winshell.cli/WinShell.CLI.csproj
 ```
 
-### Method 2: Using VS Code Tasks
+### Available Commands
+The shell includes over 30 built-in commands including:
+- File operations: cd, ls, mkdir, rm, cp, mv
+- System information: sysinfo, ps, env, path
+- Process control: kill, jobs, fg, bg
+- Utilities: cat, echo, pwd, history, clear
+- Custom: logo, ag, aloksir, monikamam, and others
 
-Press `Ctrl+Shift+P` and run:
-- **Build**: `Tasks: Run Task` → `build`
-- **Run CLI**: `Tasks: Run Task` → `run-cli` 
-- **Run GUI**: `Tasks: Run Task` → `run-gui`
-- **Run CLI Standalone**: `Tasks: Run Task` → `run-cli-standalone`
+## Academic Context
 
-### Method 3: Using Launch Scripts
-
-#### PowerShell
-```powershell
-.\launch-cli.ps1
-```
-
-#### Batch File
-```cmd
-launch-cli.bat
-```
-
-### Method 4: Direct Executable
-
-After building, you can run the executables directly:
-
-```bash
-# CLI (opens in new console window)
-.\winshell.cli\bin\Debug\net6.0-windows\WinShell.CLI.exe
-
-# GUI (opens Windows Forms application)  
-.\winshell.gui\bin\Debug\net6.0-windows\WinShell.GUI.exe
-```
-
-## CLI Features & Branding
-
-### Clean WINSHELL Banner
-The CLI displays a clean, professional banner that works in all console environments:
-```
-  +============================================================+
-  |                       WINSHELL                            |
-  +============================================================+
-
-                WinShell v1.0.0 - CLI Terminal
-                Running in standalone console mode
-        Type 'help' for available commands, 'exit' or 'quit' to close
-================================================================
-```
-
-### WS Branded Prompt
-Instead of showing the full directory path like PowerShell (`PS D:\Long\Path\Here>`), WinShell uses a clean branded prompt:
-```
-WS [winshell2]>     # Shows current folder name only
-WS [Documents]>     # Clean and professional
-WS [src]>          # Easy to read
-```
-
-## CLI Commands
-
-Type `help` in the CLI to see available commands:
-
-- `help` - Show available commands
-- `exit` or `quit` - Close the shell
-- `cls` or `clear` - Clear screen
-- `dir` or `ls` - List directory contents
-- `cd` - Change directory
-- `pwd` - Show current directory
-- `echo` - Display text
-- `set` - Set environment variable
-- `env` - Show environment variables
-- `prompt` - Customize prompt template
-- And many more...
-
-### Prompt Customization
-
-The `prompt` command allows you to customize your shell prompt:
-
-```bash
-# Show current prompt template and help
-WS [winshell2]> prompt
-
-# Use different prompt styles
-WS [winshell2]> prompt $P$G          # Full path (like PowerShell)
-D:\Internet\winshell2> 
-
-WS [winshell2]> prompt $U@$M$G       # User@Machine (like Linux)  
-john@DESKTOP-ABC123>
-
-WS [winshell2]> prompt [$T] $G       # Time-based prompt
-[14:30:25] >
-
-WS [winshell2]> prompt WS$G          # Back to WS branding (default)
-WS [winshell2]>
-```
-
-**Prompt Variables:**
-- `$P` = Current directory path
-- `$G` = Greater than symbol (>)  
-- `$D` = Current date
-- `$T` = Current time
-- `$U` = Username
-- `$M` = Machine name
-- `WS` = WinShell brand (shows directory name only)
-
-## Building from Source
-
-```bash
-# Build entire solution
-dotnet build WinShell.sln
-
-# Build specific project
-dotnet build winshell.cli\WinShell.CLI.csproj
-dotnet build winshell.gui\WinShell.GUI.csproj
-```
+This project serves as a demonstration of:
+- Software architecture design principles
+- Object-oriented programming in C#
+- Asynchronous programming patterns
+- User interface development
+- Process management and system programming
+- Version control with Git
+- Professional software documentation
 
 ## Project Structure
 
 ```
-winshell2/
-├── winshell.cli/          # CLI application (standalone console)
-├── winshell.gui/          # GUI application (Windows Forms)
-├── winshell.core/         # Core shell engine and commands
-├── winshell.common/       # Common interfaces and types
-├── WinShell.sln           # Solution file
-├── launch-cli.bat         # Batch launcher script
-└── launch-cli.ps1         # PowerShell launcher script
+WinShell/
+├── winshell.cli/          # Command-line interface
+│   ├── CliInterface.cs
+│   ├── Program.cs
+│   └── WinShell.CLI.csproj
+├── winshell.common/       # Shared interfaces
+│   ├── CommandResult.cs
+│   ├── ICommand.cs
+│   └── WinShell.Common.csproj
+├── winshell.core/         # Core engine
+│   ├── CommandEngine.cs
+│   ├── CommandParser.cs
+│   ├── ProcessManager.cs
+│   ├── ShellEnvironment.cs
+│   └── WinShell.Core.csproj
+└── winshell.gui/          # Graphical interface
+    ├── MainWindow.cs
+    ├── TerminalControl.cs
+    ├── ThemeManager.cs
+    ├── ProcessMonitorForm.cs
+    └── WinShell.GUI.csproj
 ```
 
-## Key Differences
+## Development Team
 
-### CLI Mode
-- Runs in a **separate console window** (not within PowerShell)
-- Full shell functionality with command history
-- Keyboard shortcuts (Ctrl+C for command cancellation)
-- Professional terminal experience
+Developed by students as part of their coursework, demonstrating practical application of software engineering concepts learned in academic settings.
 
-### GUI Mode  
-- Windows Forms graphical interface
-- Visual terminal control
-- Mouse interaction support
-- Modern windowed experience
+## License
 
-Both modes provide the same core shell functionality powered by the WinShell.Core engine.
+This project is created for educational purposes as part of academic coursework.
 
-## Troubleshooting
+## Acknowledgments
 
-### Build Errors - DLL File Locked
+Special thanks to the faculty advisors and mentors who provided guidance throughout the development process. The ASCII art feature includes tributes to project mentors and team members.
 
-**Problem**: Build fails with error "Could not copy... The file is locked by: WinShell.CLI"
+## Future Enhancements
 
-**Solution**: This happens when the CLI is running and locks the DLL files. Use one of these solutions:
+Potential areas for expansion include:
+- Script execution capabilities
+- Command completion and suggestions
+- Extended plugin architecture
+- Cross-platform support
+- Remote shell capabilities
+- Enhanced debugging tools
 
-1. **Use the clean-build task** (Recommended):
-   ```
-   Ctrl+Shift+P → Tasks: Run Task → clean-build
-   ```
-   This automatically stops CLI processes, cleans, and rebuilds.
+---
 
-2. **Use the stop-cli task**:
-   ```
-   Ctrl+Shift+P → Tasks: Run Task → stop-cli
-   ```
-
-3. **Manual PowerShell command**:
-   ```powershell
-   Get-Process -Name "WinShell.CLI" -ErrorAction SilentlyContinue | Stop-Process -Force
-   ```
-
-4. **Use the smart launch scripts**: They automatically handle existing processes.
-
-### Multiple Instances
-
-The launch scripts (`launch-cli.ps1`, `launch-cli-direct.ps1`) automatically detect and handle existing instances, preventing conflicts and DLL locking issues.
+For more information or to report issues, please use the GitHub repository issue tracker.

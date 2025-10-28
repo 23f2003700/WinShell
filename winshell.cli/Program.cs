@@ -27,7 +27,7 @@ namespace WinShell.CLI
             if (AllocConsole())
             {
                 // Set console title
-                Console.Title = "WinShell - Command Line Interface";
+                Console.Title = "WinShell CLI";
                 
                 // Get console window handle and show it normally
                 IntPtr consoleHandle = GetConsoleWindow();

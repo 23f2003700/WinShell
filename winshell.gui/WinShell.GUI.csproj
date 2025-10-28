@@ -9,4 +9,14 @@
     <ProjectReference Include="..\WinShell.Core\WinShell.Core.csproj" />
     <ProjectReference Include="..\WinShell.Common\WinShell.Common.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\ascii\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>ascii\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+    <None Include="..\ok.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>ok.png</Link>
+    </None>
+  </ItemGroup>
 </Project>

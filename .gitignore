@@ -1,78 +1,252 @@
-# Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-[Ww][Ii][Nn]32/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
+# Ignore everything by default# Build results# Build results# Build results
 
-# Visual Studio cache/options
-.vs/
-.vscode/
+*
 
-# User-specific files
-*.rsuser
+bin/
+
+# Allow only specific directories and files
+
+!.gitignoreobj/[Dd]ebug/[Dd]ebug/
+
+!README.md
+
+!WinShell.slnDebug/
+
+
+
+# Allow the four project foldersRelease/[Rr]elease/[Dd]ebugPublic/
+
+!winshell.cli/
+
+!winshell.common/x64/
+
+!winshell.core/
+
+!winshell.gui/x86/x64/[Rr]elease/
+
+
+
+# Within project folders, only allow source files
+
+!winshell.cli/*.cs
+
+!winshell.cli/*.csproj# Visual Studiox86/[Rr]eleases/
+
+!winshell.common/*.cs
+
+!winshell.common/*.csproj.vs/
+
+!winshell.core/*.cs
+
+!winshell.core/*.csproj.vscode/[Aa]rm/x64/
+
+!winshell.gui/*.cs
+
+!winshell.gui/*.csproj
+
+
+# User-specific files[Aa]rm64/x86/
+
 *.suo
-*.user
+
+*.userbld/[Ww][Ii][Nn]32/
+
 *.userosscache
-*.sln.docstates
 
-# Build results
-*_i.c
-*_p.c
-*_h.h
-*.ilk
-*.meta
-*.obj
-*.iobj
-*.pch
-*.pdb
-*.ipdb
-*.pgc
-*.pgd
-*.rsp
-*.sbr
-*.tlb
-*.tli
-*.tlh
-*.tmp
-*.tmp_proj
-*_wpftmp.csproj
-*.log
-*.tlog
-*.vspscc
-*.vssscc
-.builds
-*.pidb
-*.svclog
-*.scc
+[Bb]in/[Aa][Rr][Mm]/
 
-# NuGet Packages
-*.nupkg
-*.snupkg
-**/packages/*
-!**/packages/build/
-*.nuget.props
-*.nuget.targets
+# Build outputs
 
-# Publish folders
-**/publish/
+Installer/[Oo]bj/[Aa][Rr][Mm]64/
+
 publish-temp/
 
-# Installer output
-Installer/
+[Ll]og/bld/
+
+# Compiled executable and installer files
+
+*.exe[Ll]ogs/[Bb]in/
+
+*.dll
+
+*.pdb[Oo]bj/
+
+*.deps.json
+
+*.runtimeconfig.json# Visual Studio cache/options[Ll]og/
+
+
+
+# Image and icon files.vs/[Ll]ogs/
+
+*.ico
+
+*.png.vscode/
+
+*.jpg
+
+*.jpeg# Visual Studio cache/options
+
+*.gif
+
+*.bmp# User-specific files.vs/
+
+
+
+# Markdown files (except README.md)*.rsuser.vscode/
+
+*.md
+
+!README.md*.suo
+
+
+
+# Installer configuration*.user# User-specific files
+
+*.iss
+
+*.userosscache*.rsuser
+
+# Scripts
+
+*.bat*.sln.docstates*.suo
+
+*.ps1
+
+*.user
 
 # Backup files
+
+*.bak# Build results*.userosscache
+
+*.backup
+
+*.cs.backup**/bin/*.sln.docstates
+
+
+
+# Temporary files**/obj/
+
+*.tmp
+
+*.temp# Build results
+
+*_backup.*
+
+# Installer files*_i.c
+
+# Logs
+
+*.logInstaller/*_p.c
+
+
+
+# Only track these essential folders and filesPublished/*_h.h
+
+!winshell.cli/
+
+!winshell.cli/*.cspublish-temp/*.ilk
+
+!winshell.cli/*.csproj
+
+!winshell.common/*.meta
+
+!winshell.common/*.cs
+
+!winshell.common/*.csproj# Backup files*.obj
+
+!winshell.core/
+
+!winshell.core/*.cs*.backup*.iobj
+
+!winshell.core/*.csproj
+
+!winshell.gui/*.bak*.pch
+
+!winshell.gui/*.cs
+
+!winshell.gui/*.csproj*.old*.pdb
+
+!README.md
+
+!WinShell.sln*.ipdb
+
+
+# Temporary files*.pgc
+
+*.tmp*.pgd
+
+*.temp*.rsp
+
+~$**.sbr
+
+*.tlb
+
+# Package files*.tli
+
+*.nupkg*.tlh
+
+*.snupkg*.tmp
+
+*.tmp_proj
+
+# Test results*_wpftmp.csproj
+
+[Tt]est[Rr]esult*/*.log
+
+[Bb]uild[Ll]og.**.tlog
+
+*.vspscc
+
+# NuGet*.vssscc
+
+*.nuget.props.builds
+
+*.nuget.targets*.pidb
+
+*.svclog
+
+# Project-specific excludes*.scc
+
+WinShell.sln.bak/
+
+banner-backup.cs# NuGet Packages
+
+launch-*.ps1*.nupkg
+
+launch-*.bat*.snupkg
+
+test-*.bat**/packages/*
+
+test-*.ps1!**/packages/build/
+
+*.iss*.nuget.props
+
+*.ico*.nuget.targets
+
+*.png
+
+*.md# Publish folders
+
+!README.md**/publish/
+
+ascii/publish-temp/
+
+New folder*/
+
+GUI-*.md# Installer output
+
+INSTALLER-*.mdInstaller/
+
+ASCII-*.md
+
+ZOOM-*.md# Backup files
+
 *-backup.*
-banner-backup.cs
+
+# Keep only essential project foldersbanner-backup.cs
+
+# Tracked: winshell.cli, winshell.common, winshell.core, winshell.gui, README.md
 
 # Extra documentation (keep only README.md)
 INSTALLER-README.md

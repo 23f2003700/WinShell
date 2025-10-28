@@ -55,6 +55,19 @@ namespace WinShell.CLI
                         Console.Clear();
                         PrintBanner(); // Reprint banner after clearing
                     }
+                    // Check for ASCII art with image marker (CLI only displays ASCII text)
+                    else if (!string.IsNullOrEmpty(result.Output) && result.Output.StartsWith("[ASCII_ART_IMAGE:"))
+                    {
+                        // Extract and display only the ASCII text, ignore image path
+                        int endIndex = result.Output.IndexOf("]");
+                        if (endIndex > 0)
+                        {
+                            string asciiText = result.Output.Substring(endIndex + 2); // Skip ]\n
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.WriteLine(asciiText);
+                            Console.ResetColor();
+                        }
+                    }
                     else if (!string.IsNullOrEmpty(result.Output))
                     {
                         Console.WriteLine(result.Output);
@@ -129,15 +142,21 @@ namespace WinShell.CLI
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine();
-            Console.WriteLine("  +============================================================+");
-            Console.WriteLine("  |                       WINSHELL                            |");
-            Console.WriteLine("  +============================================================+");
+            Console.WriteLine("                          WinShell CLI");
+            Console.WriteLine();
+            Console.WriteLine("  ================================================================");
+            Console.WriteLine("                          WINSHELL");
+            Console.WriteLine("  ================================================================");
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("                WinShell v1.0.0 - CLI Terminal");
             Console.WriteLine("                Running in standalone console mode");
             Console.WriteLine("        Type 'help' for available commands, 'exit' or 'quit' to close");
-            Console.WriteLine("================================================================\n");
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("        TIP: Use Ctrl + Mouse Wheel or Ctrl +/- to zoom in/out");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("  ================================================================\n");
             Console.ResetColor();
         }
     }

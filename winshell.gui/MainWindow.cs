@@ -32,7 +32,7 @@ namespace WinShell.GUI
             this.SuspendLayout();
             
             // Form settings
-            this.Text = "🖥️ WinShell - Modern Terminal";
+            this.Text = "WinShell GUI";
             this.Size = new Size(1400, 800);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Icon = SystemIcons.Application;
@@ -106,7 +106,7 @@ namespace WinShell.GUI
             // Tools menu
             var toolsMenu = new ToolStripMenuItem("Tools");
             toolsMenu.DropDownItems.Add("Environment Variables", null, (s, e) => ShowEnvironmentVariables());
-            toolsMenu.DropDownItems.Add("Process Manager", null, (s, e) => ShowProcessManager());
+            toolsMenu.DropDownItems.Add("Process Manager", null, (s, e) => ShowProcessMonitor());
             toolsMenu.DropDownItems.Add("Settings", null, (s, e) => ShowSettings());
 
             // Help menu
@@ -240,9 +240,10 @@ namespace WinShell.GUI
             _terminal.ExecuteCommand("env");
         }
 
-        private void ShowProcessManager()
+        private void ShowProcessMonitor()
         {
-            var processForm = new ProcessMonitorForm(_terminal.GetProcessManager());
+            // Show the comprehensive system process monitor (ProcessInfoForm)
+            var processForm = new ProcessInfoForm();
             processForm.ShowDialog();
         }
 
@@ -414,12 +415,6 @@ Licensed under MIT License";
         private void ClearTerminal()
         {
             _terminal.Clear();
-        }
-
-        private void ShowProcessMonitor()
-        {
-            var processInfoForm = new ProcessInfoForm();
-            processInfoForm.ShowDialog();
         }
 
         private void ShowQuickNavigate()
