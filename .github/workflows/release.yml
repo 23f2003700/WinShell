@@ -80,7 +80,6 @@ jobs:
       run: |
         dotnet publish winshell.cli\WinShell.CLI.csproj `
           --configuration Release `
-          --no-build `
           --output ./publish/cli `
           --runtime win-x64 `
           --no-self-contained
@@ -92,7 +91,6 @@ jobs:
       run: |
         dotnet publish winshell.gui\WinShell.GUI.csproj `
           --configuration Release `
-          --no-build `
           --output ./publish/gui `
           --runtime win-x64 `
           --no-self-contained
