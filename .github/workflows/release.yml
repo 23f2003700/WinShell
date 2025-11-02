@@ -1,10 +1,10 @@
-name: Build and Release
+﻿name: Build and Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'  # Trigger on version tags like v1.0.0
-  workflow_dispatch:  # Allow manual trigger
+      - 'v*.*.*'
+  workflow_dispatch:
     inputs:
       version:
         description: 'Release version (e.g., 1.0.0)'
@@ -19,26 +19,17 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    # ========================================================================
-    # Checkout Code
-    # ========================================================================
-    - name: 📥 Checkout Repository
+    - name:  Checkout Repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Full history for proper versioning
+        fetch-depth: 0
     
-    # ========================================================================
-    # Setup .NET
-    # ========================================================================
-    - name: 🔧 Setup .NET
+    - name:  Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
-    # ========================================================================
-    # Get Version from Tag
-    # ========================================================================
-    - name: 🏷️ Get Version
+    - name:  Get Version
       id: get_version
       shell: pwsh
       run: |
@@ -50,22 +41,13 @@ jobs:
         echo "VERSION=$version" >> $env:GITHUB_OUTPUT
         echo "Version: $version"
     
-    # ========================================================================
-    # Restore Dependencies
-    # ========================================================================
-    - name: 📦 Restore Dependencies
+    - name:  Restore Dependencies
       run: dotnet restore WinShell.sln
     
-    # ========================================================================
-    # Build Solution
-    # ========================================================================
-    - name: 🔨 Build Solution
+    - name:  Build Solution
       run: dotnet build WinShell.sln --configuration Release --no-restore
     
-    # ========================================================================
-    # Create NuGet Package
-    # ========================================================================
-    - name: 📦 Create NuGet Package
+    - name:  Create NuGet Package
       run: |
         dotnet pack winshell.cli\WinShell.CLI.csproj `
           --configuration Release `
@@ -73,48 +55,35 @@ jobs:
           --output ./packages `
           /p:Version=${{ steps.get_version.outputs.VERSION }}
     
-    # ========================================================================
-    # Publish CLI
-    # ========================================================================
-    - name: 🚀 Publish CLI
+    - name:  Publish CLI
       run: |
         dotnet publish winshell.cli\WinShell.CLI.csproj `
           --configuration Release `
           --output ./publish/cli `
           --runtime win-x64 `
-          --no-self-contained
+          --self-contained false
     
-    # ========================================================================
-    # Publish GUI
-    # ========================================================================
-    - name: 🚀 Publish GUI
+    - name:  Publish GUI
       run: |
         dotnet publish winshell.gui\WinShell.GUI.csproj `
           --configuration Release `
           --output ./publish/gui `
           --runtime win-x64 `
-          --no-self-contained
+          --self-contained false
     
-    # ========================================================================
-    # Create ZIP Packages
-    # ========================================================================
-    - name: 📦 Create Release Packages
+    - name:  Create Release Packages
       shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.VERSION }}"
         
-        # Create release directory
         New-Item -ItemType Directory -Path ./releases -Force
         
-        # CLI ZIP
         Compress-Archive -Path ./publish/cli/* `
           -DestinationPath "./releases/WinShell-CLI-v$version-win-x64.zip"
         
-        # GUI ZIP
         Compress-Archive -Path ./publish/gui/* `
           -DestinationPath "./releases/WinShell-GUI-v$version-win-x64.zip"
         
-        # Combined ZIP
         New-Item -ItemType Directory -Path ./publish/combined/CLI -Force
         New-Item -ItemType Directory -Path ./publish/combined/GUI -Force
         Copy-Item ./publish/cli/* ./publish/combined/CLI/ -Recurse -Force
@@ -125,29 +94,25 @@ jobs:
         Compress-Archive -Path ./publish/combined/* `
           -DestinationPath "./releases/WinShell-Complete-v$version-win-x64.zip"
         
-        # Generate checksums
         Get-ChildItem ./releases/*.zip | ForEach-Object {
           $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash
           "$hash  $($_.Name)" | Out-File -FilePath ./releases/checksums.txt -Append -Encoding UTF8
         }
     
-    # ========================================================================
-    # Generate Release Notes
-    # ========================================================================
-    - name: 📝 Generate Release Notes
+    - name:  Generate Release Notes
       id: release_notes
       shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.VERSION }}"
         $notes = @"
-        ## 🎉 WinShell v$version
+        ##  WinShell v$version
         
-        ### 📦 Installation Methods
+        ###  Installation Methods
         
         #### Method 1: .NET Global Tool (Recommended)
-        ``````bash
+        `ash
         dotnet tool install --global WinShell.CLI --version $version
-        ``````
+        `
         
         #### Method 2: Download Binaries
         Download one of the ZIP files below:
@@ -155,7 +120,7 @@ jobs:
         - **WinShell-GUI** - Graphical interface only
         - **WinShell-Complete** - Both CLI and GUI
         
-        ### ✨ Features
+        ###  Features
         - 30+ built-in commands
         - Native pipeline support (|)
         - Background job management (&, jobs, fg, bg)
@@ -166,27 +131,23 @@ jobs:
         - Real-time process monitoring
         - Command history
         
-        ### 📋 Requirements
+        ###  Requirements
         - Windows 10 version 1809 or later
         - .NET 6.0 Runtime (for framework-dependent builds)
         
-        ### 🔒 Verification
-        See \`checksums.txt\` for SHA256 hashes of all release files.
+        ###  Verification
+        See `checksums.txt` for SHA256 hashes of all release files.
         
-        ### 📚 Documentation
-        - [Installation Guide](https://github.com/23f2003700/WinShell/blob/main/INSTALLATION.md)
+        ###  Documentation
         - [User Guide](https://github.com/23f2003700/WinShell/blob/main/README.md)
         
-        ### 🐛 Bug Reports
+        ###  Bug Reports
         Report issues at: https://github.com/23f2003700/WinShell/issues
         "@
         
         $notes | Out-File -FilePath ./release_notes.md -Encoding UTF8
     
-    # ========================================================================
-    # Create GitHub Release
-    # ========================================================================
-    - name: 🎁 Create GitHub Release
+    - name:  Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ steps.get_version.outputs.VERSION }}
@@ -201,24 +162,18 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
-    # ========================================================================
-    # Publish to NuGet (Optional - uncomment if you want auto-publish)
-    # ========================================================================
-    # - name: 📤 Publish to NuGet
-    #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    #   run: |
-    #     dotnet nuget push ./packages/*.nupkg `
-    #       --api-key ${{ secrets.NUGET_API_KEY }} `
-    #       --source https://api.nuget.org/v3/index.json `
-    #       --skip-duplicate
+    - name:  Publish to NuGet
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      run: |
+        dotnet nuget push ./packages/*.nupkg `
+          --api-key ${{ secrets.NUGET_API_KEY }} `
+          --source https://api.nuget.org/v3/index.json `
+          --skip-duplicate
     
-    # ========================================================================
-    # Summary
-    # ========================================================================
-    - name: 📊 Build Summary
+    - name:  Build Summary
       shell: pwsh
       run: |
-        Write-Host "✅ Build completed successfully!" -ForegroundColor Green
+        Write-Host " Build completed successfully!" -ForegroundColor Green
         Write-Host ""
         Write-Host "Version: ${{ steps.get_version.outputs.VERSION }}" -ForegroundColor Cyan
         Write-Host "Release URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ steps.get_version.outputs.VERSION }}" -ForegroundColor Cyan
