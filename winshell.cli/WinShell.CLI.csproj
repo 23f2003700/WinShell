@@ -1,23 +1,40 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <UseWindowsForms>true</UseWindowsForms>
-    <UseWPF>false</UseWPF>
+    <RuntimeIdentifiers>win-x64;win-x86;win-arm64</RuntimeIdentifiers>
+    
+    <!-- NuGet Package Configuration -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>winshell</ToolCommandName>
+    <PackageId>WinShell.CLI</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>AASHITA BHANDARI, HARSH RAJANI, AARYAN CHOUDHARY</Authors>
+    <Company>MBM University</Company>
+    <Product>WinShell</Product>
+    <Description>WinShell - A Modern Windows Terminal with dual CLI/GUI interface. Features 30+ built-in commands, native pipelines, background job management, and rich theming support.</Description>
+    <Copyright>Copyright (c) 2025 WinShell Project</Copyright>
+    <PackageProjectUrl>https://github.com/23f2003700/WinShell</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/23f2003700/WinShell</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>shell;terminal;cli;windows;console;command-line;pipeline;async;modern-terminal</PackageTags>
+    <PackageReleaseNotes>Initial release - v1.0.0 with 30+ built-in commands, native pipelines, background jobs, and async execution.</PackageReleaseNotes>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
+  
   <ItemGroup>
     <ProjectReference Include="..\WinShell.Core\WinShell.Core.csproj" />
     <ProjectReference Include="..\WinShell.Common\WinShell.Common.csproj" />
   </ItemGroup>
+  
   <ItemGroup>
     <None Include="..\ascii\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>ascii\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </None>
-    <None Include="..\ok.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>ok.png</Link>
-    </None>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

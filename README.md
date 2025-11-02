@@ -1,177 +1,214 @@
-# WinShell - Modern Terminal Solution for Windows
+﻿#  WinShell - Modern Windows Terminal
 
-A comprehensive Windows terminal application developed as part of an academic project, combining the functionality of a graphical user interface and command-line interface into a unified shell environment.
+A powerful, modern Windows terminal application with dual CLI and GUI interfaces. Features 30+ built-in commands, native pipeline support, background job management, and a rich theming system.
 
-## Project Overview
+##  Features
 
-WinShell represents a complete reimagining of the traditional Windows command-line experience. The project demonstrates advanced software engineering principles by implementing a dual-interface terminal that provides both GUI convenience and CLI efficiency while maintaining a shared core engine architecture.
+### Core Capabilities
+- **30+ Built-in Commands** - File operations, process control, environment management, and utilities
+- **Native Pipelines** - Text-based pipeline support with `|` operator
+- **I/O Redirection** - Full support for `>`, `>>`, and `<` operators
+- **Background Jobs** - Run commands with `&`, manage with `jobs`, `fg`, `bg`, `kill`
+- **Async Execution** - All commands run asynchronously with cancellation support
+- **Dual Interface** - Both CLI and GUI versions available
 
-## Core Architecture
+### GUI Features
+- 6 Beautiful themes (Classic, Dark, Ocean, Sunset, Forest, Cyberpunk)
+- Real-time process monitoring
+- Command history browser
+- Quick navigation
+- Settings panel
 
-The project is structured using a layered architecture pattern that promotes separation of concerns and maintainability:
+##  Installation
 
-### winshell.common
-Contains shared interfaces and data structures used throughout the application. This layer defines the contract for command execution results and command implementations, ensuring consistency across all components.
+### Method 1: NuGet Global Tool (Recommended)
 
-### winshell.core
-The heart of the application, containing:
-- **CommandEngine**: Orchestrates command parsing, execution, and result handling
-- **ProcessManager**: Manages external process lifecycle and background job execution
-- **ShellEnvironment**: Maintains session state including current directory and environment variables
-- **CommandParser**: Tokenizes and validates command syntax with support for pipes and redirections
-
-### winshell.cli
-Command-line interface implementation providing:
-- Interactive command prompt with history navigation
-- Asynchronous command execution
-- Signal handling for process interruption
-- Support for Windows Console zoom and formatting
-- ASCII art display capabilities
-
-### winshell.gui
-Windows Forms-based graphical interface featuring:
-- Custom terminal control with rich text formatting
-- Theme management system with multiple color schemes
-- Visual process monitoring with real-time metrics
-- Quick navigation dialog for common system locations
-- Image embedding support for enhanced content display
-- Zoom functionality for improved accessibility
-
-## Key Features
-
-### Dual Interface Design
-Users can choose between GUI and CLI modes depending on their workflow preferences. Both interfaces share the same underlying command engine, ensuring consistent behavior and results.
-
-### Advanced Command Processing
-The shell supports sophisticated command patterns including:
-- Pipeline operations for chaining commands
-- Input and output redirection
-- Background job execution
-- Built-in command set with native implementation
-- External program execution with full console support
-
-### Visual Enhancements
-The GUI provides modern features not typically found in traditional terminals:
-- Live theme switching without restart
-- Real-time process monitoring with sortable columns
-- Embedded image support for rich content
-- Customizable font sizing with zoom controls
-
-### Custom Commands
-Includes specialized commands for displaying ASCII art and images, demonstrating the extensibility of the command system. The logo command showcases project branding while the ASCII art commands illustrate how text and graphics can be integrated into terminal workflows.
-
-## Technical Implementation
-
-### Language and Framework
-- Built with C# targeting .NET 6.0
-- Windows Forms for GUI implementation
-- Asynchronous programming model using async/await
-- Strong typing with interface-based design
-
-### Command Execution Model
-Commands are executed through a unified pipeline:
-1. Input parsing and tokenization
-2. Command type resolution (built-in vs external)
-3. Asynchronous execution with cancellation support
-4. Result aggregation and output formatting
-5. Error handling and status reporting
-
-### Process Management
-Background processes are tracked and managed through a dedicated ProcessManager component, allowing users to:
-- List active background jobs
-- Bring jobs to foreground
-- Terminate running processes
-- Monitor resource usage
-
-## Installation and Usage
-
-### Requirements
-- Windows 10 or later (version 1809+)
-- .NET 6.0 Runtime (included in self-contained builds)
-
-### Building from Source
 ```bash
-dotnet build WinShell.sln -c Release
+dotnet tool install --global WinShell.CLI
+winshell
 ```
 
-### Running the Applications
-GUI Mode:
+**Update:**
 ```bash
-dotnet run --project winshell.gui/WinShell.GUI.csproj
+dotnet tool update --global WinShell.CLI
 ```
 
-CLI Mode:
+**Uninstall:**
 ```bash
-dotnet run --project winshell.cli/WinShell.CLI.csproj
+dotnet tool uninstall --global WinShell.CLI
 ```
 
-### Available Commands
-The shell includes over 30 built-in commands including:
-- File operations: cd, ls, mkdir, rm, cp, mv
-- System information: sysinfo, ps, env, path
-- Process control: kill, jobs, fg, bg
-- Utilities: cat, echo, pwd, history, clear
-- Custom: logo, ag, aloksir, monikamam, and others
+### Method 2: Download from GitHub Releases
 
-## Academic Context
+1. Visit [Releases](https://github.com/23f2003700/WinShell/releases)
+2. Download:
+   - `WinShell-CLI-vX.X.X-win-x64.zip` - CLI only
+   - `WinShell-GUI-vX.X.X-win-x64.zip` - GUI only
+   - `WinShell-Complete-vX.X.X-win-x64.zip` - Both
+3. Extract and run
 
-This project serves as a demonstration of:
-- Software architecture design principles
-- Object-oriented programming in C#
-- Asynchronous programming patterns
-- User interface development
-- Process management and system programming
-- Version control with Git
-- Professional software documentation
+### Method 3: Build from Source
 
-## Project Structure
-
-```
-WinShell/
-├── winshell.cli/          # Command-line interface
-│   ├── CliInterface.cs
-│   ├── Program.cs
-│   └── WinShell.CLI.csproj
-├── winshell.common/       # Shared interfaces
-│   ├── CommandResult.cs
-│   ├── ICommand.cs
-│   └── WinShell.Common.csproj
-├── winshell.core/         # Core engine
-│   ├── CommandEngine.cs
-│   ├── CommandParser.cs
-│   ├── ProcessManager.cs
-│   ├── ShellEnvironment.cs
-│   └── WinShell.Core.csproj
-└── winshell.gui/          # Graphical interface
-    ├── MainWindow.cs
-    ├── TerminalControl.cs
-    ├── ThemeManager.cs
-    ├── ProcessMonitorForm.cs
-    └── WinShell.GUI.csproj
+```bash
+git clone https://github.com/23f2003700/WinShell.git
+cd WinShell
+dotnet build -c Release
 ```
 
-## Development Team
+##  Quick Start
 
-Developed by students as part of their coursework, demonstrating practical application of software engineering concepts learned in academic settings.
+```bash
+# Start WinShell
+winshell
 
-## License
+# Basic commands
+> help              # Show all commands
+> ls                # List files
+> pwd               # Current directory
+> echo Hello World  # Print text
 
-This project is created for educational purposes as part of academic coursework.
+# Pipeline
+> dir | findstr .txt
 
-## Acknowledgments
+# Background job
+> notepad &
+> jobs
 
-Special thanks to the faculty advisors and mentors who provided guidance throughout the development process. The ASCII art feature includes tributes to project mentors and team members.
+# Exit
+> exit
+```
 
-## Future Enhancements
+##  Built-in Commands
 
-Potential areas for expansion include:
-- Script execution capabilities
-- Command completion and suggestions
-- Extended plugin architecture
-- Cross-platform support
-- Remote shell capabilities
-- Enhanced debugging tools
+### File Operations
+- `dir`, `ls` - List directory
+- `mkdir` - Create directory
+- `rmdir` - Remove directory
+- `del`, `rm` - Delete files
+- `copy`, `cp` - Copy files
+- `move`, `mv` - Move files
+- `type`, `cat` - Display file
+
+### Navigation
+- `cd`, `chdir` - Change directory
+- `pwd` - Print working directory
+- `pushd` - Push to directory stack
+- `popd` - Pop from directory stack
+
+### Process Control
+- `jobs` - List background jobs
+- `fg` - Foreground job
+- `bg` - Background job
+- `kill` - Terminate process
+
+### Environment
+- `set` - Set variable
+- `env` - List variables
+- `prompt` - Customize prompt
+
+### Utilities
+- `echo` - Print text
+- `cls`, `clear` - Clear screen
+- `help` - Show help
+- `history` - Command history
+- `exit` - Exit shell
+
+##  System Requirements
+
+**Minimum:**
+- Windows 10 (version 1809+)
+- x64 architecture
+- .NET 6.0 Runtime
+- 4 GB RAM
+
+**Recommended:**
+- Windows 11
+- 8 GB RAM
+
+##  Academic Project
+
+Developed at **MBM University, Jodhpur** by:
+- AASHITA BHANDARI
+- HARSH RAJANI
+- AARYAN CHOUDHARY
+
+##  For Developers
+
+### Publishing a New Version
+
+1. **Update version** in `winshell.cli/WinShell.CLI.csproj`
+
+2. **Create and push tag:**
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+3. **GitHub Actions automatically:**
+   - Builds solution
+   - Creates NuGet package
+   - Creates ZIP files
+   - Creates GitHub Release
+   - Uploads artifacts
+
+### Manual Build
+
+```powershell
+# Build everything
+.\build-release.ps1 -Version "1.0.0" -CreateNuGetPackage -CreateZipPackages
+
+# Publish to NuGet (requires API key)
+.\publish-nuget.ps1 -ApiKey "YOUR_KEY" -Version "1.0.0"
+```
+
+### GitHub Secrets Setup
+
+Add to repository secrets:
+
+- `NUGET_API_KEY` - Your NuGet API key
+
+##  Troubleshooting
+
+### "dotnet tool not found"
+Ensure .NET 6.0 SDK/Runtime is installed: <https://dotnet.microsoft.com/download/dotnet/6.0>
+
+### "winshell command not found"
+Add to PATH: `$env:USERPROFILE\.dotnet\tools`
+
+### Build errors
+```bash
+dotnet clean
+dotnet restore
+dotnet build
+```
+
+##  License
+
+MIT License - See [LICENSE](LICENSE) file
+
+Copyright  2025 WinShell Project
+
+##  Links
+
+- **Repository:** <https://github.com/23f2003700/WinShell>
+- **Issues:** <https://github.com/23f2003700/WinShell/issues>
+- **NuGet:** <https://www.nuget.org/packages/WinShell.CLI/>
+
+##  Release Notes
+
+### Version 1.0.0 (November 2025)
+
+**Initial Release:**
+- 30+ built-in commands
+- Native pipeline support
+- Background job management
+- I/O redirection
+- Async execution
+- Dual CLI/GUI interface
+- 6 themes for GUI
+- Command history
+- Process monitoring
 
 ---
 
-For more information or to report issues, please use the GitHub repository issue tracker.
+**Made with  in India**

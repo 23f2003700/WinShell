@@ -225,8 +225,7 @@ namespace WinShell.GUI
                         AppendOutput("\n", Color.Red);
                 }
 
-                // Only show exit code if it's not 0 and not -1 (which indicates interrupted/killed process)
-                if (!result.Success && result.ExitCode != 0 && result.ExitCode != -1)
+                if (!result.Success && result.ExitCode != 0)
                 {
                     AppendOutput($"Command exited with code: {result.ExitCode}\n", Color.Yellow);
                 }
